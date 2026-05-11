@@ -1,3 +1,5 @@
+# Object for API
+
 from pydantic import BaseModel
 
 class Product(BaseModel):

@@ -35,3 +35,23 @@ def add_product(product: Product):
     # hint in argument is for FastAPI testing 
     products.append(product)
     return product
+
+# update product
+@app.put("/product")
+def update_product(id: int, product: Product):
+    for i in range(len(products)):
+        if products[i].id == id:
+            products[i] = product
+            return "Product Updated"
+
+    return "Products not found"
+
+# delete product
+@app.delete("/product")
+def delete_product(id: int):
+    for i in range(len(products)):
+        if products[i].id == id:
+            del products[i]
+            return "Product Deleted"
+
+    return "Products not found"
