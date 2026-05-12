@@ -1,5 +1,6 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Depends
 from model import Product
+from sqlalchemy.orm import Session
 from database import session, engine
 import database_model
 
@@ -13,6 +14,18 @@ products = [
     Product(id=1, name="Phone", description="A smartphone", price=699.9, quantity=50),
     Product(id=2, name="Laptop", description="A powerful laptop", price=999.9, quantity=30),
 ]
+
+# create connection once, waiting other function do the query, then close
+def get_db():
+    db = session()
+
+    # try: Wraps the "risky" code that might cause an error.
+    try:
+        # waiting for other function to use it
+        yield db
+    # finally: Contains "cleanup" code that always executes, even if an error occurs or the program returns early
+    finally:
+        db.close()
 
 # populate db for the first time
 def init_db():
@@ -45,17 +58,20 @@ def greet():
 
 # show all products
 @app.get("/products")
-def get_all_products():
-    return products
+# Dependency injection (inject db variable from get_db())
+def get_all_products(db: Session = Depends(get_db)):
+    db_products = db.query(database_model.Product).all()
+    return db_products
 
 # get specific product
 @app.get("/product/{id}")
-def get_product_by_id(id: int):
-    for product in products:
-        if product.id == id:
-            return product
+def get_product_by_id(id: int, db: Session = Depends(get_db)):
+    # if get product > 1, return the first one
+    db_product = db.query(database_model.Product).filter(database_model.Product.id == id).first()
+    if db_product:
+        return db_product
     
-    return "Products not found"
+    return "Product not found"
 
 # add product
 @app.post("/product")
